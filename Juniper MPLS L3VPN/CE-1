@@ -1,0 +1,45 @@
+interfaces {
+    ge-0/0/0 {
+        description "link to PE-1";
+        flexible-vlan-tagging;
+        encapsulation flexible-ethernet-services;
+        unit 1 {
+            vlan-id 1;
+            family inet {
+                address 172.16.1.2/24;
+            }
+        }
+    }
+    lo0 {
+        unit 0 {
+            family inet {
+                address 172.16.1.255/32;
+            }
+        }
+    }
+}
+routing-options {
+    autonomous-system 65001;
+}
+protocols {
+    bgp {
+        group EBGP {
+            type external;
+            export send_direct;
+            neighbor 172.16.1.1 {
+                peer-as 65000;
+            }
+        }
+    }
+}
+policy-options {
+    policy-statement send_direct {
+        term 1 {
+            from protocol direct;
+            then accept;
+        }
+        term last {
+            then reject;
+        }
+    }
+}

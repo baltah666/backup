@@ -1,0 +1,117 @@
+interfaces {
+    ge-0/0/0 {
+        description "link to P-1";
+        unit 0 {
+            family inet {
+                address 10.0.11.1/31;
+            }
+            family mpls;
+        }
+    }
+    ge-0/0/1 {
+        description "link to CE-1";
+        unit 0 {
+            family inet {
+                address 172.16.11.1/24;
+            }
+        }
+    }
+    lo0 {
+        unit 0 {
+            family inet {
+                address 10.0.255.2/32;
+            }
+        }
+    }
+}
+routing-options {
+    router-id 10.0.255.2;
+    autonomous-system 1000;
+}
+protocols {
+    rsvp {
+        interface ge-0/0/0.0;
+    }
+    mpls {
+        label-switched-path to_ASBR-1 {
+            to 10.0.255.3;
+        }
+        interface ge-0/0/0.0;
+    }
+    bgp {
+        group MPLS {
+            type internal;
+            local-address 10.0.255.2;
+            family inet-vpn {
+                unicast;
+            }
+            neighbor 10.0.255.3;
+        }
+    }
+    ospf {
+        traffic-engineering;
+        reference-bandwidth 10g;
+        area 0.0.0.0 {
+            interface lo0.0 {
+                passive;
+            }
+            interface ge-0/0/0.0 {
+                interface-type p2p;
+            }
+        }
+    }
+    ldp {
+        interface ge-0/0/0.0;
+        interface lo0.0;
+        session-protection;
+    }
+}
+policy-options {
+    policy-statement VPN-Export {
+        term 1 {
+            then {
+                community add L3-VPN;
+                accept;
+            }
+        }
+        term last {
+            then reject;
+        }
+    }
+    policy-statement VPN-Import {
+        term 1 {
+            from {
+                protocol bgp;
+                community L3-VPN;
+            }
+            then accept;
+        }
+        term last {
+            then reject;
+        }
+    }
+    community L3-VPN members target:1000:2000;
+}
+routing-instances {
+    CE-1 {
+        instance-type vrf;
+        interface ge-0/0/1.0;
+        route-distinguisher 1000:2000;
+        vrf-import VPN-Import;
+        vrf-export VPN-Export;
+        vrf-table-label;
+        routing-options {
+            auto-export;
+        }
+        protocols {
+            bgp {
+                group EBGP {
+                    type external;
+                    neighbor 172.16.11.2 {
+                        peer-as 65000;
+                    }
+                }
+            }
+        }
+    }
+}

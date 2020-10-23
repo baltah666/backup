@@ -1,0 +1,27 @@
+interfaces {
+    ge-0/0/0 {
+        description "link to PE-2";
+        unit 0 {
+            family inet {
+                address 172.16.22.2/24;
+            }
+        }
+    }
+    lo0 {
+        unit 0 {
+            family inet {
+                address 172.16.22.255/32;
+            }
+        }
+    }
+}
+protocols {
+    ospf {
+        area 0.0.0.22 {
+            interface lo0.0 {
+                passive;
+            }
+            interface ge-0/0/0.0;
+        }
+    }
+}

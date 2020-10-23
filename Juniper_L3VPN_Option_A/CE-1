@@ -1,0 +1,43 @@
+interfaces {
+    ge-0/0/0 {
+        description "link to PE-1";
+        unit 0 {
+            family inet {
+                address 172.16.11.2/24;
+            }
+        }
+    }
+    lo0 {
+        unit 0 {
+            family inet {
+                address 172.16.11.255/32;
+            }
+        }
+    }
+}
+routing-options {
+    router-id 172.16.11.255;
+    autonomous-system 65000;
+}
+protocols {
+    bgp {
+        group EBGP {
+            type external;
+            export send_direct;
+            neighbor 172.16.11.1 {
+                peer-as 1000;
+            }
+        }
+    }
+}
+policy-options {
+    policy-statement send_direct {
+        term 1 {
+            from protocol direct;
+            then accept;
+        }
+        term last {
+            then reject;
+        }
+    }
+}

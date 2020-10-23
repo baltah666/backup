@@ -1,0 +1,40 @@
+interfaces {
+    ge-0/0/1 {
+        description "link to R1";
+        unit 0 {
+            family inet {
+                address 10.0.13.2/30;
+            }
+        }
+    }
+    lo0 {
+        unit 0 {
+            family inet {
+                address 10.0.255.2/32;
+            }
+        }
+    }
+}
+routing-options {
+    router-id 10.0.255.2;
+    autonomous-system 65002;
+}
+protocols {
+    bgp {
+        group EBGP {
+            type external;
+            export send_lo0;
+            neighbor 10.0.13.1 {
+                peer-as 65001;
+            }
+        }
+    }
+}
+policy-options {
+    policy-statement send_lo0 {
+        term 1 {
+            from interface lo0.0;
+            then accept;
+        }
+    }
+}

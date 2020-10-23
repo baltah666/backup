@@ -1,0 +1,87 @@
+interfaces {
+    ge-0/0/0 {
+        description "link to R3";
+        unit 0 {
+            family inet {
+                address 10.0.11.2/30;
+            }
+        }
+    }
+    ge-0/0/1 {
+        description "link to R2";
+        unit 0 {
+            family inet {
+                address 10.0.13.1/30;
+            }
+        }
+    }
+    lo0 {
+        unit 0 {
+            family inet {
+                address 10.0.255.1/32;
+            }
+        }
+    }
+}
+routing-options {
+    router-id 10.0.255.1;
+    autonomous-system 65001;
+}
+protocols {
+    bgp {
+        group R2 {
+            type external;
+            import TAG-R2;
+            export [ send_lo0 ADV-R3 ];
+            neighbor 10.0.13.2 {
+                peer-as 65002;
+            }
+        }
+        group R3 {
+            type external;
+            import TAG-R3;
+            export [ send_lo0 ADV-R2 ];
+            neighbor 10.0.11.1 {
+                peer-as 65003;
+            }
+        }
+    }
+}
+policy-options {
+    policy-statement ADV-R2 {
+        term 1 {
+            from community R3;
+            then accept;
+        }
+    }
+    policy-statement ADV-R3 {
+        term 1 {
+            from community R2;
+            then accept;
+        }
+    }
+    policy-statement TAG-R2 {
+        term 1 {
+            then {
+                community add R2;
+                accept;
+            }
+        }
+    }
+    policy-statement TAG-R3 {
+        term 1 {
+            then {
+                community add R3;
+                accept;
+            }
+        }
+    }
+    policy-statement send_lo0 {
+        term 1 {
+            from interface lo0.0;
+            then accept;
+        }
+    }
+    community R2 members 65001:65002;
+    community R3 members 65001:65003;
+}
